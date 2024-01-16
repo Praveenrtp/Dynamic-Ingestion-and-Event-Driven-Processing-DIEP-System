@@ -1,0 +1,61 @@
+
+useDotenv: true
+
+service: glue-ingestion-framework
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  stackTags:
+    env: qa
+    created-date: 2022-04-26
+    team: python-dev
+    customer-impact: false
+    terraform: false
+
+
+plugins:
+  - serverless-python-requirements
+
+
+custom:
+  pythonRequirements:
+    dockerizePip: false
+    zip: true
+
+package:
+  exclude:
+    - '**/*'
+  include:
+    - '*.py'
+
+functions:
+  lambda:
+    handler: lambda_function.lambda_handler
+    environment:
+      DEV_ACCESS_KEY: ${env:DEV_ACCESS_KEY}
+      DEV_AWS_SECRET_KEY: ${env:DEV_AWS_SECRET_KEY}
+      DYNAMODB_TABLE : ${env:DYNAMODB_TABLE}
+
+
+resources:
+  Resources:
+    dynamodbtables:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${env:DYNAMODB_TABLE}
+        AttributeDefinitions:
+          - AttributeName: job_name
+            AttributeType: S
+          - AttributeName: table_name
+            AttributeType: S
+        KeySchema:
+          - AttributeName: job_name
+            KeyType: HASH
+          - AttributeName: table_name
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+        TableClass: STANDARD
+        PointInTimeRecoverySpecification:
+          PointInTimeRecoveryEnabled: false
